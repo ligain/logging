@@ -1,0 +1,36 @@
+---
+# tasks file for install_nginx
+
+- name: Install EPEL Repo package from standard repo
+  yum:
+    name: epel-release
+    state: installed
+  tags:
+    - epel-package
+    - packages
+
+- name: Install nginx from repo
+  yum:
+    name: nginx
+    state: latest
+  tags:
+    - nginx-package
+    - packages
+  notify:
+    - restart nginx
+
+- name: Enable nginx in systemd
+  systemd:
+    name: nginx
+    enabled: yes
+  tags:
+    - nginx-configuration
+
+- name: Create nginx config file from template
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+  tags:
+    - nginx-configuration
+  notify:
+    - reload nginx

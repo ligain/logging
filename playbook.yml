@@ -1,0 +1,75 @@
+---
+- name: Install nginx on the web server
+  hosts: web
+  become: yes
+
+  roles:
+    - install_nginx
+
+- name: Install log server
+  hosts: log
+  become: yes
+
+  tasks:
+    - name: Install systemd-journal-gateway 
+      yum:
+        name: systemd-journal-gateway
+        state: installed
+        update_cache: yes
+
+    - name: Create a /var/log/journal/remote remote directory 
+      file:
+        path: /var/log/journal/remote
+        state: directory
+        mode: '0755'
+        owner: systemd-journal-remote
+        group: systemd-journal-remote
+
+    - name: Edit systemd-journal-remote.service unit
+      replace:
+        path: /lib/systemd/system/systemd-journal-remote.service
+        regexp: 'https'
+        replace: 'http'
+
+    - name: Run systemd-journal-remote service
+      systemd:
+        name: systemd-journal-remote
+        state: started
+
+
+- name: Install log system on the web server
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Install systemd-journal-gateway 
+      yum:
+        name: systemd-journal-gateway
+        state: installed
+        update_cache: yes
+
+    - name: Add journal-upload config
+      # lineinfile:
+      #   path: /etc/systemd/journald.conf
+      #   line: URL=http://{{hostvars['log']['ip_addr']}}:19532
+      #   create: yes
+
+      # blockinfile:
+      #   path: /etc/systemd/journald.conf
+      #   block: |
+      #     [Upload]
+      #     URL=http://{{hostvars['log']['ip_addr']}}:19532
+
+      blockinfile:
+        path: /etc/systemd/journal-upload.d/webserver.conf
+        block: |
+          [Upload]
+          URL=http://{{hostvars['log']['ip_addr']}}:19532
+        owner: systemd-journal-upload
+        group: systemd-journal-upload
+        create: yes
+
+    - name: Run systemd-journal-upload service
+      systemd:
+        name: systemd-journal-upload
+        state: started
