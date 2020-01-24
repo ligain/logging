@@ -49,19 +49,8 @@
         update_cache: yes
 
     - name: Add journal-upload config
-      # lineinfile:
-      #   path: /etc/systemd/journald.conf
-      #   line: URL=http://{{hostvars['log']['ip_addr']}}:19532
-      #   create: yes
-
-      # blockinfile:
-      #   path: /etc/systemd/journald.conf
-      #   block: |
-      #     [Upload]
-      #     URL=http://{{hostvars['log']['ip_addr']}}:19532
-
       blockinfile:
-        path: /etc/systemd/journal-upload.d/webserver.conf
+        path: /etc/systemd/journal-upload.conf.d/webserver.conf
         block: |
           [Upload]
           URL=http://{{hostvars['log']['ip_addr']}}:19532
@@ -73,3 +62,11 @@
       systemd:
         name: systemd-journal-upload
         state: started
+
+    - name: Add audit logs for nginx
+      lineinfile:
+        path: /etc/audit/rules.d/audit.rules
+        line: -w /etc/nginx/ -p wa -k nginx
+
+    - name: Restart auditd daemon
+      command: "service auditd restart"
