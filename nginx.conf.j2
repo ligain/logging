@@ -1,0 +1,19 @@
+events {
+    worker_connections 1024;
+}
+
+error_log syslog:server={{hostvars['log']['ip_addr']}},facility=local7,tag=nginx_error_log,severity=info;
+error_log /var/log/nginx/error.log crit;
+
+http {
+    access_log syslog:server={{hostvars['log']['ip_addr']}},facility=local7,tag=nginx_acess_log,severity=info;
+
+    server {
+        listen       8080 default_server;
+        server_name  default_server;
+        root         /usr/share/nginx/html;
+
+        location / {
+        }
+    }
+}
