@@ -1,16 +1,14 @@
 ---
-- name: Install nginx on the web server
-  hosts: web
-  become: yes
-
-  roles:
-    - install_nginx
-
 - name: Install log server
   hosts: log
   become: yes
 
   tasks:
+    - name: Put SELinux in permissive mode, logging actions that would be blocked.
+      selinux:
+        policy: targeted
+        state: permissive
+
     - name: Install systemd-journal-gateway 
       yum:
         name: systemd-journal-gateway
@@ -31,17 +29,30 @@
         regexp: 'https'
         replace: 'http'
 
+    - name: Reload network service
+      systemd:
+        name: network
+        state: started
+
     - name: Run systemd-journal-remote service
       systemd:
         name: systemd-journal-remote
         state: started
 
-
+    
 - name: Install log system on the web server
   hosts: web
   become: yes
 
+  roles:
+    - install_nginx
+
   tasks:
+    - name: Put SELinux in permissive mode, logging actions that would be blocked.
+      selinux:
+        policy: targeted
+        state: permissive
+
     - name: Install systemd-journal-gateway 
       yum:
         name: systemd-journal-gateway
@@ -65,6 +76,11 @@
         owner: root
         group: root
         mode: 0644
+
+    - name: Reload network service
+      systemd:
+        name: network
+        state: started
 
     - name: Restart systemd-journald service
       systemd:
@@ -118,3 +134,5 @@
       systemd:
         service: nginx
         state: reloaded
+
+    
