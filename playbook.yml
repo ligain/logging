@@ -29,6 +29,16 @@
         regexp: 'https'
         replace: 'http'
 
+    - name: Configure rsyslog.conf
+      copy: 
+        src: log-rsyslog.conf
+        dest: /etc/rsyslog.d/log-rsyslog.conf
+
+    - name: Restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted
+
     - name: Reload network service
       systemd:
         name: network
@@ -107,20 +117,10 @@
         src: auditd.conf 
         dest: /etc/audit/auditd.conf 
 
-    - name: Configure audisp-remote.conf
-      template: 
-        src: audisp-remote.conf.j2 
-        dest: /etc/audisp/audisp-remote.conf
-
-    - name: Configure au-remote.conf
-      copy: 
-        src: au-remote.conf 
-        dest: /etc/audisp/plugins.d/au-remote.conf
-
     - name: Configure syslog.conf
       copy: 
         src: syslog.conf 
-        dest: /etc/audisp/plugins.d/syslog.conf 
+        dest: /etc/audisp/plugins.d/syslog.conf
 
     - name: Restart auditd daemon
       command: "service auditd restart"
