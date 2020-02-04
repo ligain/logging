@@ -27,10 +27,10 @@ $ cd logging/
 $ vagrant up
 ```
 4) Nginx logs on the **log**
-![nginx_logs]([https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_logs.png](https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_logs.png))
+![nginx_logs](https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_logs.png)
 
 5) Nginx audit logs on the **log**
-![nginx_audit_log]([https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_audit_log.png](https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_audit_log.png))
+![nginx_audit_log](https://raw.githubusercontent.com/ligain/logging/master/screenshots/nginx_audit_log.png)
 
 # Project Goals 
 The code is written for educational purposes.
