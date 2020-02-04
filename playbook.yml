@@ -1,138 +1,19 @@
 ---
-- name: Install log server
+- name: Configure remote log server
   hosts: log
   become: yes
 
-  tasks:
-    - name: Put SELinux in permissive mode, logging actions that would be blocked.
-      selinux:
-        policy: targeted
-        state: permissive
-
-    - name: Install systemd-journal-gateway 
-      yum:
-        name: systemd-journal-gateway
-        state: installed
-        update_cache: yes
-
-    - name: Create a /var/log/journal/remote remote directory 
-      file:
-        path: /var/log/journal/remote
-        state: directory
-        mode: '0755'
-        owner: systemd-journal-remote
-        group: systemd-journal-remote
-
-    - name: Edit systemd-journal-remote.service unit
-      replace:
-        path: /lib/systemd/system/systemd-journal-remote.service
-        regexp: 'https'
-        replace: 'http'
-
-    - name: Configure rsyslog.conf
-      copy: 
-        src: log-rsyslog.conf
-        dest: /etc/rsyslog.d/log-rsyslog.conf
-
-    - name: Restart rsyslog
-      service:
-        name: rsyslog
-        state: restarted
-
-    - name: Reload network service
-      systemd:
-        name: network
-        state: started
-
-    - name: Run systemd-journal-remote service
-      systemd:
-        name: systemd-journal-remote
-        state: started
+  roles:
+    - rsyslog-log
+    - journald-log
 
     
-- name: Install log system on the web server
+- name: Configure web server
   hosts: web
   become: yes
 
   roles:
     - install_nginx
-
-  tasks:
-    - name: Put SELinux in permissive mode, logging actions that would be blocked.
-      selinux:
-        policy: targeted
-        state: permissive
-
-    - name: Install systemd-journal-gateway 
-      yum:
-        name: systemd-journal-gateway
-        state: installed
-        update_cache: yes
-
-    - name: Add journal-upload config
-      blockinfile:
-        path: /etc/systemd/journal-upload.conf.d/webserver.conf
-        block: |
-          [Upload]
-          URL=http://{{hostvars['log']['ip_addr']}}:19532
-        owner: systemd-journal-upload
-        group: systemd-journal-upload
-        create: yes
-
-    - name: Add journald.conf config
-      template:
-        src: journald.conf.j2
-        dest: /etc/systemd/journald.conf
-        owner: root
-        group: root
-        mode: 0644
-
-    - name: Reload network service
-      systemd:
-        name: network
-        state: started
-
-    - name: Restart systemd-journald service
-      systemd:
-        service: systemd-journald
-        state: restarted
-
-    - name: Run systemd-journal-upload service
-      systemd:
-        name: systemd-journal-upload
-        state: started
-
-    - name: Add audit logs for nginx
-      lineinfile:
-        path: /etc/audit/rules.d/audit.rules
-        line: -w /etc/nginx/ -p wa -k nginx
-
-    - name: Install audispd-plugins
-      yum:
-        name: audispd-plugins
-        state: installed
-
-    - name: Configure auditd.conf
-      copy: 
-        src: auditd.conf 
-        dest: /etc/audit/auditd.conf 
-
-    - name: Configure syslog.conf
-      copy: 
-        src: syslog.conf 
-        dest: /etc/audisp/plugins.d/syslog.conf
-
-    - name: Restart auditd daemon
-      command: "service auditd restart"
-
-    - name: Configure nginx
-      template:
-        src: nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-
-    - name: Reload nginx
-      systemd:
-        service: nginx
-        state: reloaded
-
-    
+    - configure_nginx
+    - journald-web
+    - audit-web

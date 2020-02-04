@@ -1,0 +1,39 @@
+---
+- name: Install systemd-journal-gateway 
+  yum:
+    name: systemd-journal-gateway
+    state: installed
+    update_cache: yes
+
+- name: Add journal-upload config
+  blockinfile:
+    path: /etc/systemd/journal-upload.conf.d/webserver.conf
+    block: |
+      [Upload]
+      URL=http://{{hostvars['log']['ip_addr']}}:19532
+    owner: systemd-journal-upload
+    group: systemd-journal-upload
+    create: yes
+
+- name: Add journald.conf config
+  template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Reload network service
+  systemd:
+    name: network
+    state: started
+
+- name: Restart systemd-journald service
+  systemd:
+    service: systemd-journald
+    state: restarted
+
+- name: Run systemd-journal-upload service
+  systemd:
+    name: systemd-journal-upload
+    state: started

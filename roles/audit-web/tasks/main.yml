@@ -1,0 +1,23 @@
+---
+- name: Add audit logs for nginx
+  lineinfile:
+    path: /etc/audit/rules.d/audit.rules
+    line: -w /etc/nginx/ -p wa -k nginx
+
+- name: Install audispd-plugins
+  yum:
+    name: audispd-plugins
+    state: installed
+
+- name: Configure auditd.conf
+  copy: 
+    src: auditd.conf 
+    dest: /etc/audit/auditd.conf 
+
+- name: Configure syslog.conf
+  copy: 
+    src: syslog.conf 
+    dest: /etc/audisp/plugins.d/syslog.conf
+
+- name: Restart auditd daemon
+  command: "service auditd restart"
